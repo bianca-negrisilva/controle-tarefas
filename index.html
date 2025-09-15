@@ -1,0 +1,664 @@
+<link rel="icon" href="assets/favicon.png">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1e7a3f">
+<meta property="og:title" content="Produtividade — Green Aesthetic">
+<meta property="og:description" content="App de tarefas com cronômetro, subtarefas e filtros.">
+<meta property="og:image" content="assets/og-image.png">
+<meta property="og:type" content="website">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Produtividade — Green Aesthetic PRO+</title>
+<style>
+  :root{
+    --bg:#f3f7f2; --panel:#e9f1e7; --panel2:#dfeadc; --ink:#203322; --muted:#56665a;
+    --primary:#1e7a3f; --pinv:#fff; --outline:#c9d7c6;
+    --todo-bg:#e8eef7; --todo-fg:#0b3d91;
+    --doing-bg:#fff3cd; --doing-fg:#7a5c00;
+    --done-bg:#d1f2e2; --done-fg:#0d6040;
+    --blocked-bg:#f8d7da; --blocked-fg:#8a1c24;
+  }
+  *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
+  header{position:sticky;top:0;z-index:10;background:color-mix(in srgb,var(--bg) 80%,#fff 20%);border-bottom:1px solid var(--outline);backdrop-filter:blur(6px)}
+  .wrap{max-width:1200px;margin:0 auto;padding:14px 16px}
+  .row{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+  .btn{appearance:none;border:none;border-radius:12px;padding:10px 14px;font-weight:700;cursor:pointer}
+  .btn-primary{background:var(--primary);color:var(--pinv);box-shadow:0 8px 20px rgba(9,88,45,.25)}
+  .btn-ghost{background:transparent;border:1px solid var(--primary);color:var(--primary)}
+  main .wrap{padding-top:18px;padding-bottom:96px}
+  .card{background:#f6fbf5;border:1px solid var(--outline);border-radius:16px;overflow:hidden;box-shadow:0 6px 24px rgba(40,70,50,.08)}
+  table{width:100%;border-collapse:collapse}
+  thead th{background:var(--panel2);padding:12px;border-bottom:1px solid var(--outline);font-size:13px;letter-spacing:.4px;text-transform:uppercase;color:var(--muted);text-align:left;user-select:none;cursor:pointer;position:relative}
+  thead th.sort-asc::after{content:" ↑"} thead th.sort-desc::after{content:" ↓"}
+  tbody td{padding:12px;border-bottom:1px solid var(--outline);background:#fff;vertical-align:middle}
+  tbody tr:nth-child(even) td{background:#fbfdfb}
+  tbody tr.drag-ghost{opacity:.4}
+  .col-narrow{width:44px} .col-time{width:140px} .col-expand{width:36px}
+  .icon-btn{width:36px;height:36px;display:grid;place-items:center;border-radius:10px;border:1px solid var(--outline);background:#fff;cursor:pointer}
+  .icon-btn:hover{background:var(--panel)}
+  .icon{width:18px;height:18px}
+  .task-name{font-weight:600}
+  .task-name.running{font-weight:800}
+  .badge{display:inline-block;padding:6px 10px;border-radius:999px;font-weight:700;font-size:12px;border:1px solid transparent}
+  .b-todo{background:var(--todo-bg);color:var(--todo-fg);border-color:color-mix(in srgb,var(--todo-fg) 25%,transparent)}
+  .b-doing{background:var(--doing-bg);color:var(--doing-fg);border-color:color-mix(in srgb,var(--doing-fg) 25%,transparent)}
+  .b-done{background:var(--done-bg);color:var(--done-fg);border-color:color-mix(in srgb,var(--done-fg) 25%,transparent)}
+  .b-blocked{background:var(--blocked-bg);color:var(--blocked-fg);border-color:color-mix(in srgb,var(--blocked-fg) 25%,transparent)}
+  .tag{background:#e2efe6;color:#1a4f2b;border:1px solid #b7d0bf;padding:4px 8px;border-radius:8px;font-size:12px;font-weight:600;margin-right:6px}
+  .subrow td{background:#f9fcf8}
+  .subcard{background:#fff;border:1px solid var(--outline);border-radius:12px;padding:8px}
+  .subhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+  .footer{position:fixed;left:0;right:0;bottom:0;border-top:1px solid var(--outline);background:linear-gradient(180deg,#e7f3eb 0%,#dbeadf 100%);box-shadow:0 -8px 24px rgba(40,70,50,.16);z-index:9}
+  .footer .row{padding:10px 16px}
+  .pill{background:#114d2a;color:#fff;border-radius:999px;padding:6px 12px;font-weight:800}
+  .clock{font-variant-numeric:tabular-nums;font-feature-settings:"tnum" 1;font-size:28px;font-weight:800;color:#0f3a22}
+  dialog{border:none;border-radius:16px;overflow:hidden;width:min(620px,94vw);box-shadow:0 22px 60px rgba(0,0,0,.25)}
+  .dlg-h{background:var(--panel2);padding:14px 16px;border-bottom:1px solid var(--outline);font-weight:800}
+  .dlg-b{padding:16px;background:#fff}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .grid label{font-size:12px;color:var(--muted);text-transform:uppercase;font-weight:700}
+  .grid input,.grid select,.grid textarea{border:1px solid var(--outline);border-radius:10px;padding:10px}
+  .dlg-a{display:flex;gap:8px;justify-content:flex-end;padding:12px 16px;border-top:1px solid var(--outline);background:#fff}
+  .popover{position:fixed;z-index:9999;background:#fff;border:1px solid var(--outline);border-radius:12px;box-shadow:0 16px 40px rgba(0,0,0,.18);padding:8px;min-width:180px}
+  .popover h4{margin:6px 8px 8px;font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.3px}
+  .menu-btn{width:100%;text-align:left;background:#fff;border:1px solid transparent;border-radius:10px;padding:8px 10px;cursor:pointer}
+  .menu-btn:hover{background:var(--panel)}
+  .menu-line{display:flex;gap:8px;align-items:center;margin:6px 0}
+  .menu-line input, .menu-line select{width:100%}
+  @media (max-width:900px){ .grid{grid-template-columns:1fr} thead .hide-sm, tbody .hide-sm{display:none} }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap row">
+    <h1 style="margin:0;font-size:18px">Tarefas</h1>
+    <button id="btnNew" class="btn btn-primary">+ Nova Tarefa</button>
+  </div>
+</header>
+
+<main>
+  <div class="wrap">
+    <div class="card">
+      <table id="tbl">
+        <thead>
+          <tr>
+            <th class="col-expand" data-nosort> </th>
+            <th class="col-narrow" data-nosort title="Play">▶</th>
+            <th data-key="title">Tarefa</th>
+            <th data-key="responsible">Responsável</th>
+            <th data-key="status">Status</th>
+            <th class="hide-sm" data-key="tags">Tags</th>
+            <th data-key="priority">Prioridade</th>
+            <th data-key="due">Prazo</th>
+            <th class="hide-sm" data-key="addedAt">Adicionada em</th>
+            <th class="hide-sm" data-key="addedBy">Adicionada por</th>
+            <th class="col-time" data-key="time">Tempo Registrado</th>
+            <th data-nosort>Editar</th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</main>
+
+<footer class="footer" aria-live="polite">
+  <div class="wrap">
+    <div class="row">
+      <div style="display:flex;align-items:center;gap:12px;min-width:0">
+        <span class="pill" id="activeName">Nenhuma tarefa ativa</span>
+        <span class="clock" id="activeClock">00:00:00</span>
+      </div>
+      <div style="display:flex;gap:10px">
+        <button id="gPlay" class="icon-btn" title="Iniciar/Retomar"><span class="icon"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span></button>
+        <button id="gPause" class="icon-btn" title="Pausar"><span class="icon"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 5h4v14H6zm8 0h4v14h-4z"/></svg></span></button>
+        <button id="gStop" class="icon-btn" title="Parar"><span class="icon"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h12v12H6z"/></svg></span></button>
+        <button id="gRestart" class="icon-btn" title="Reiniciar"><span class="icon"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 6V2l-4 4 4 4V6c3.31 0 6 2.69 6 6a6 6 0 1 1-6-6zm0 14a8 8 0 1 0 0-16"/></svg></span></button>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<!-- Dialog: criar/editar tarefa -->
+<dialog id="dlgTask">
+  <div class="dlg-h" id="dlgTitle">Nova Tarefa</div>
+  <form id="formTask" class="dlg-b" method="dialog">
+    <div class="grid">
+      <div><label>Título</label><input id="t-title" required/></div>
+      <div><label>Responsável</label><input id="t-resp"/></div>
+      <div><label>Status</label><select id="t-status"><option>A fazer</option><option>Em andamento</option><option>Concluído</option><option>Bloqueado</option></select></div>
+      <div><label>Prioridade</label><select id="t-priority"><option>Alta</option><option>Média</option><option>Baixa</option></select></div>
+      <div><label>Prazo</label><input id="t-due" type="date"/></div>
+      <div><label>Adicionada por</label><input id="t-by"/></div>
+      <div style="grid-column:1/-1"><label>Tags (vírgulas)</label><input id="t-tags"/></div>
+    </div>
+    <div class="dlg-a"><button type="button" class="btn btn-ghost" onclick="closeTaskDialog()">Cancelar</button><button class="btn btn-primary">Salvar</button></div>
+  </form>
+</dialog>
+
+<!-- Dialog: criar/editar subtarefa -->
+<dialog id="dlgSub">
+  <div class="dlg-h" id="dlgSubTitle">Nova Subtarefa</div>
+  <form id="formSub" class="dlg-b" method="dialog">
+    <div class="grid">
+      <div><label>Título</label><input id="s-title" required/></div>
+      <div><label>Status</label><select id="s-status"><option>A fazer</option><option>Em andamento</option><option>Concluído</option><option>Bloqueado</option></select></div>
+      <div><label>Prioridade</label><select id="s-priority"><option>Alta</option><option>Média</option><option>Baixa</option></select></div>
+      <div><label>Prazo</label><input id="s-due" type="date"/></div>
+      <div><label>Data programada</label><input id="s-scheduled" type="date"/></div>
+      <div><label>Ordem</label><input id="s-order" type="number" min="1" step="1" value="1"/></div>
+      <div style="grid-column:1/-1"><label>Tags (vírgulas)</label><input id="s-tags"/></div>
+    </div>
+    <div class="dlg-a"><button type="button" class="btn btn-ghost" onclick="closeSubDialog()">Cancelar</button><button class="btn btn-primary">Salvar</button></div>
+  </form>
+</dialog>
+
+<script>
+/* ========== Modelo & Estado ========= */
+const LS_KEY="green_tasks_pro_v3";
+function makeTask(title,resp,status,tags,priority,due,by){
+  const ymd=new Date().toISOString().slice(0,10);
+  return { id:crypto.randomUUID(), title, responsible:resp||"", status, tags:tags||[],
+    priority, due:due||"", addedAt:ymd, addedBy:by||"",
+    timeSpentSec:0, running:false, lastStart:null,
+    subtasks:[], expanded:false, sortManual:0 };
+}
+function makeSub(title,status,tags,priority,due,scheduled,order){
+  return { id:crypto.randomUUID(), title, status, tags:tags||[],
+    priority:priority||"Média", due:due||"", scheduled:scheduled||"", order:order||1,
+    timeSpentSec:0, running:false, lastStart:null };
+}
+let state = load() || seed();
+let {tasks, active, sort} = state;
+let tick=null;
+
+/* ========== Persistência ========= */
+function save(){ localStorage.setItem(LS_KEY, JSON.stringify({tasks,active,sort})); }
+function load(){ try{ return JSON.parse(localStorage.getItem(LS_KEY)); }catch{return null} }
+
+/* ========== Seed ========= */
+function seed(){
+  const t1=makeTask("Criação de conteúdo","Ana","Em andamento",["blog","conteúdo"],"Alta",plusDays(3),"Você");
+  t1.subtasks.push(makeSub("Escrever rascunho","Em andamento",["texto"],"Alta",plusDays(1),"",1));
+  t1.subtasks.push(makeSub("Revisar copy","A fazer",["revisão"],"Média",plusDays(2),"",2));
+  const t2=makeTask("Revisão do documento","João","A fazer",["documentação"],"Média",plusDays(5),"Você");
+  const t3=makeTask("Atualizar dependências","Pedro","Bloqueado",["backend"],"Alta",plusDays(2),"Você");
+  const t4=makeTask("Pesquisa de mercado","Carla","A fazer",["pesquisa"],"Baixa",plusDays(7),"Você");
+  const t5=makeTask("Correção de erros","Lucas","Concluído",["frontend"],"Média",plusDays(1),"Você");
+  return { tasks:[t1,t2,t3,t4,t5], active:{taskId:null,subId:null}, sort:{key:"",dir:1} };
+}
+function plusDays(n){ const d=new Date(); d.setDate(d.getDate()+n); return d.toISOString().slice(0,10); }
+
+/* ========== Utils ========= */
+const $=s=>document.querySelector(s);
+const tbody=$("#tbody"), head=$("#tbl thead");
+function esc(s){return String(s??"").replace(/[&<>"']/g,m=>({ "&":"&amp;","<":"&gt;",">":"&gt;".replace(">","&gt;"),'"':"&quot;" }[m]||"&apos;"))}
+function badgeCls(st){return st==="A fazer"?"badge b-todo":st==="Em andamento"?"badge b-doing":st==="Concluído"?"badge b-done":"badge b-blocked";}
+function mapPrio(p){return {Alta:3,"Média":2,Baixa:1}[p]||0}
+function fmt(sec){sec=Math.max(0,Math.floor(sec||0));const h=String(sec/3600|0).padStart(2,"0"),m=String((sec%3600)/60|0).padStart(2,"0"),s=String(sec%60).padStart(2,"0");return `${h}:${m}:${s}`}
+function tSeconds(t){let base=t.timeSpentSec||0; if(t.running&&t.lastStart) base+=(Date.now()-t.lastStart)/1000; for(const s of t.subtasks) base+=sSeconds(s); return base;}
+function sSeconds(s){let base=s.timeSpentSec||0; if(s.running&&s.lastStart) base+=(Date.now()-s.lastStart)/1000; return base;}
+
+/* ========== Render ========= */
+function render(){
+  // ordenar tarefas: manual (drag) primeiro, depois sort escolhido
+  let list=[...tasks];
+  if(sort.key){
+    list.sort((a,b)=>{
+      const d=sort.dir;
+      if(sort.key==="time") return d*(tSeconds(a)-tSeconds(b));
+      if(sort.key==="priority") return d*(mapPrio(a.priority)-mapPrio(b.priority));
+      const va=(a[sort.key]||"").toString().toLowerCase();
+      const vb=(b[sort.key]||"").toString().toLowerCase();
+      return d*va.localeCompare(vb,"pt");
+    });
+  }
+  list.sort((a,b)=> (a.sortManual|0)-(b.sortManual|0)); // manter ordem manual
+  head.querySelectorAll("th").forEach(th=>{ th.classList.remove("sort-asc","sort-desc"); if(th.dataset.key===sort.key) th.classList.add(sort.dir===1?"sort-asc":"sort-desc"); });
+
+  tbody.innerHTML = list.map(rowHtml).join("");
+  enableRowDnD();
+  updateFooter();
+  save();
+}
+function rowHtml(t){
+  const running = (active.taskId===t.id && !active.subId) ? "running" : "";
+  const expand = t.expanded ? "−" : "+";
+  return `
+  <tr data-id="${t.id}" draggable="true">
+    <td class="col-expand"><button class="icon-btn act-expand" title="Expandir/contrair"><span>${expand}</span></button></td>
+    <td class="col-narrow"><button class="icon-btn act-play" title="Iniciar tarefa"><span class="icon"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span></button></td>
+    <td><span class="task-name ${running}">${esc(t.title)}</span></td>
+    <td>${esc(t.responsible)}</td>
+    <td data-cell="status"><span class="${badgeCls(t.status)}">${esc(t.status)}</span></td>
+    <td class="hide-sm">${t.tags.map(x=>`<span class="tag">#${esc(x)}</span>`).join("")}</td>
+    <td data-cell="priority"><strong>${esc(t.priority)}</strong></td>
+    <td>${esc(t.due)}</td>
+    <td class="hide-sm">${esc(t.addedAt)}</td>
+    <td class="hide-sm">${esc(t.addedBy)}</td>
+    <td class="col-time"><code>${fmt(tSeconds(t))}</code></td>
+    <td><button class="btn btn-ghost act-edit">Editar</button></td>
+  </tr>
+  ${t.expanded ? subTableHtml(t) : ""}`;
+}
+function subTableHtml(t){
+  const rows = t.subtasks
+    .sort((a,b)=>(a.order|0)-(b.order|0))
+    .map(s=>`
+      <tr data-sub="${s.id}" data-parent="${t.id}">
+        <td>
+          <button class="icon-btn act-play-sub" data-task="${t.id}" data-sub="${s.id}" title="Iniciar subtarefa">
+            <span class="icon"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span>
+          </button>
+        </td>
+        <td class="drag-handle">☰</td>
+        <td>${esc(s.title)}</td>
+        <td><span class="${badgeCls(s.status)}">${esc(s.status)}</span></td>
+        <td>${esc(s.priority||"")}</td>
+        <td>${esc(s.order||1)}</td>
+        <td>${esc(s.due||"")}</td>
+        <td>${esc(s.scheduled||"")}</td>
+        <td>${s.tags.map(x=>`<span class="tag">#${esc(x)}</span>`).join("")}</td>
+        <td><code>${fmt(sSeconds(s))}</code></td>
+        <td>
+          <button class="btn btn-ghost act-edit-sub" data-task="${t.id}" data-sub="${s.id}">Editar</button>
+          <button class="btn btn-ghost act-del-sub" data-task="${t.id}" data-sub="${s.id}">Excluir</button>
+        </td>
+      </tr>`).join("");
+  return `
+  <tr class="subrow"><td colspan="12">
+    <div class="subcard">
+      <div class="subhead">
+        <strong>Subtarefas de “${esc(t.title)}”</strong>
+        <div>
+          <button class="btn btn-ghost act-add-sub" data-task="${t.id}">+ Subtarefa</button>
+        </div>
+      </div>
+      <table style="width:100%;border-collapse:collapse">
+        <thead>
+          <tr>
+            <th style="width:44px"></th>
+            <th style="width:44px">Ordem</th>
+            <th>Subtarefa</th>
+            <th>Status</th>
+            <th>Prioridade</th>
+            <th>#</th>
+            <th>Prazo</th>
+            <th>Programada</th>
+            <th>Tags</th>
+            <th style="width:120px">Tempo</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody class="subtbody" data-task="${t.id}">
+          ${rows}
+        </tbody>
+      </table>
+    </div>
+  </td></tr>`;
+}
+
+/* ========== Row Drag & Drop (tarefas) ========= */
+function enableRowDnD(){
+  tbody.querySelectorAll('tr[data-id]').forEach((tr, idx)=>{
+    tr.dataset.index = idx;
+    tr.addEventListener('dragstart', e=>{
+      tr.classList.add('drag-ghost'); e.dataTransfer.setData('text/plain', tr.dataset.id);
+    });
+    tr.addEventListener('dragend', ()=>tr.classList.remove('drag-ghost'));
+    tr.addEventListener('dragover', e=>{ e.preventDefault(); });
+    tr.addEventListener('drop', e=>{
+      e.preventDefault();
+      const draggedId = e.dataTransfer.getData('text/plain');
+      const targetId = tr.dataset.id;
+      if(!draggedId || !targetId || draggedId===targetId) return;
+      const order = new Map();
+      tasks.forEach((t,i)=>order.set(t.id, i));
+      const dragged = tasks.find(t=>t.id===draggedId);
+      const targetIdx = tasks.findIndex(t=>t.id===targetId);
+      // remonta array com dragged antes do target
+      tasks = tasks.filter(t=>t.id!==draggedId);
+      tasks.splice(targetIdx,0,dragged);
+      // grava índice manual
+      tasks.forEach((t,i)=>t.sortManual=i);
+      render();
+    });
+  });
+
+  // DnD das subtarefas por ordem de execução
+  tbody.querySelectorAll('.subtbody').forEach(subtb=>{
+    const tid = subtb.dataset.task;
+    subtb.querySelectorAll('tr[data-sub]').forEach(row=>{
+      row.draggable = true;
+      row.addEventListener('dragstart', e=>{
+        row.classList.add('drag-ghost'); e.dataTransfer.setData('text/plain', JSON.stringify({tid, sid:row.dataset.sub}));
+      });
+      row.addEventListener('dragend', ()=>row.classList.remove('drag-ghost'));
+      row.addEventListener('dragover', e=>e.preventDefault());
+      row.addEventListener('drop', e=>{
+        e.preventDefault();
+        const data = JSON.parse(e.dataTransfer.getData('text/plain')||"{}");
+        if(!data.tid || data.tid!==tid) return;
+        const t=tasks.find(x=>x.id===tid); if(!t) return;
+        const draggedIdx=t.subtasks.findIndex(s=>s.id===data.sid);
+        const targetIdx=t.subtasks.findIndex(s=>s.id===row.dataset.sub);
+        if(draggedIdx<0 || targetIdx<0 || draggedIdx===targetIdx) return;
+        const [dragged]=t.subtasks.splice(draggedIdx,1);
+        t.subtasks.splice(targetIdx,0,dragged);
+        // atualiza ordem 1..n
+        t.subtasks.forEach((s,i)=>s.order=i+1);
+        render();
+      });
+    });
+  });
+}
+
+/* ========== Popovers (menus contextuais) ========= */
+let openPopover = null;
+
+// fecha apenas quando clicarmos fora *depois* que o popover existir
+function handleDocClick(e){
+  if (!openPopover) return;
+  if (!openPopover.contains(e.target)) {
+    closePopover();
+  }
+}
+document.addEventListener('click', handleDocClick);
+
+function closePopover(){
+  if (openPopover){
+    openPopover.remove();
+    openPopover = null;
+  }
+}
+
+function showPopoverAt(x, y, contentBuilder){
+  closePopover();
+  const pop = document.createElement('div');
+  pop.className = 'popover';
+  pop.style.left = `${x}px`;
+  pop.style.top  = `${y}px`;
+  contentBuilder(pop);
+  document.body.appendChild(pop);
+  openPopover = pop;
+}
+
+/* utilitário: abre popover ancorado a um elemento e PARA a propagação
+   (ev.stopPropagation impede que o clique suba até o document e feche o menu) */
+function openPopoverFromEvent(ev, anchorEl, builder){
+  ev.stopPropagation();
+  const rect = anchorEl.getBoundingClientRect();
+  showPopoverAt(rect.left, rect.bottom + 6, builder);
+}
+
+
+/* Cabeçalho: menu (Filtrar/Ordenar) */
+head.addEventListener('click', (ev)=>{
+  const th = ev.target.closest('th');
+  if (!th || th.dataset.nosort !== undefined) return;
+
+  openPopoverFromEvent(ev, th, (pop)=>{
+    const key = th.dataset.key;
+    pop.innerHTML = `<h4>${th.textContent}</h4>`;
+    const bAsc = btn('Ordenar ↑', ()=>{ sort={key,dir:1}; render(); closePopover(); });
+    const bDesc= btn('Ordenar ↓', ()=>{ sort={key,dir:-1}; render(); closePopover(); });
+    const bClr = btn('Limpar ordenação', ()=>{ sort={key:"",dir:1}; render(); closePopover(); });
+    pop.append(bAsc,bDesc,bClr,hr());
+    // Filtro simples por coluna:
+    if(key==='status'||key==='priority'||key==='responsible'){
+      const values = [...new Set(tasks.map(t=> (key==='priority'?t.priority:key==='status'?t.status:t.responsible) ))].filter(Boolean).sort();
+      pop.append(el('div','menu-line',`<small>Filtrar (${key})</small>`));
+      values.forEach(v=>{
+        const cb = document.createElement('label'); cb.className='menu-line';
+        cb.innerHTML = `<input type="checkbox" data-type="col-filter" data-key="${key}" value="${v}"> ${v}`;
+        pop.appendChild(cb);
+      });
+      const apply = btn('Aplicar filtro', ()=>{
+        const sel=[...pop.querySelectorAll('input[data-type="col-filter"]:checked')].map(i=>i.value);
+        filterState[key]=sel; render(); closePopover();
+      });
+      pop.append(apply);
+    } else if(key==='tags'){
+      pop.append(el('div','menu-line',`<small>Tags (vírgulas)</small>`));
+      const input=document.createElement('input'); input.placeholder="ex.: blog, clienteX";
+      pop.append(input);
+      const apply=btn('Aplicar filtro', ()=>{ filterState.tags=(input.value||"").split(",").map(x=>x.trim()).filter(Boolean); render(); closePopover(); });
+      pop.append(apply);
+    } else if(key==='title' || key==='addedBy'){
+      pop.append(el('div','menu-line',`<small>Contém…</small>`));
+      const input=document.createElement('input'); input.placeholder="texto";
+      pop.append(input);
+      const apply=btn('Aplicar filtro', ()=>{ filterState[key]=input.value.trim().toLowerCase(); render(); closePopover(); });
+      pop.append(apply);
+    } else if(key==='due' || key==='addedAt'){
+      pop.append(el('div','menu-line',`<small>Intervalo de datas</small>`));
+      const i1=document.createElement('input'); i1.type='date';
+      const i2=document.createElement('input'); i2.type='date';
+      pop.append(i1,i2);
+      const apply=btn('Aplicar filtro', ()=>{ filterState[key]={from:i1.value||"",to:i2.value||""}; render(); closePopover(); });
+      pop.append(apply);
+    }
+    const clearF = btn('Limpar filtros desta coluna', ()=>{ delete filterState[key]; render(); closePopover(); });
+    pop.append(hr(),clearF);
+  });
+});
+function btn(label,fn){ const b=document.createElement('button'); b.className='menu-btn'; b.textContent=label; b.onclick=fn; return b; }
+function el(tag,cls,html){ const e=document.createElement(tag); e.className=cls; e.innerHTML=html; return e; }
+function hr(){ const d=document.createElement('div'); d.style.margin='6px 0'; d.style.borderTop='1px solid var(--outline)'; return d; }
+
+/* Célula: menu inline Status/Prioridade */
+tbody.addEventListener('click', (ev)=>{
+  // menu inline por célula (Status / Prioridade)
+  const cell = ev.target.closest('td[data-cell]');
+  if (cell){
+    const tr = cell.closest('tr[data-id]');
+    const id = tr?.dataset.id;
+    if (!id) return;
+
+    openPopoverFromEvent(ev, cell, (pop)=>{
+      if (cell.dataset.cell === 'status'){
+        pop.innerHTML = '<h4>Status</h4>';
+        ["A fazer","Em andamento","Concluído","Bloqueado"].forEach(s=>{
+          pop.append(btn(s, ()=>{ const t=tasks.find(x=>x.id===id); t.status=s; render(); closePopover(); }));
+        });
+      } else if (cell.dataset.cell === 'priority'){
+        pop.innerHTML = '<h4>Prioridade</h4>';
+        ["Alta","Média","Baixa"].forEach(p=>{
+          pop.append(btn(p, ()=>{ const t=tasks.find(x=>x.id===id); t.priority=p; render(); closePopover(); }));
+        });
+      }
+    });
+    return; // impede que outros handlers tratem o mesmo clique
+  }
+
+  // ... (resto do seu handler continua igual: play/editar/expandir, subtarefas etc.)
+
+});
+
+/* Filtros (estado) */
+const filterState = {};
+function passesFilters(t){
+  // status/responsible/priority (listas)
+  for(const k of ["status","responsible","priority"]){
+    if(Array.isArray(filterState[k]) && filterState[k].length && !filterState[k].includes(t[k])) return false;
+  }
+  // tags: OR
+  if(Array.isArray(filterState.tags) && filterState.tags.length){
+    const tg = t.tags.map(x=>x.toLowerCase());
+    if(!filterState.tags.some(x=>tg.includes(x.toLowerCase()))) return false;
+  }
+  // texto
+  if(filterState.title && !t.title.toLowerCase().includes(filterState.title)) return false;
+  if(filterState.addedBy && !(t.addedBy||"").toLowerCase().includes(filterState.addedBy)) return false;
+  // datas
+  for(const k of ["due","addedAt"]){
+    const win = filterState[k];
+    if(win && (win.from||win.to)){
+      const d = (t[k]||"");
+      if(win.from && d < win.from) return false;
+      if(win.to && d > win.to) return false;
+    }
+  }
+  return true;
+}
+
+/* ========== Eventos tabela (play, editar, expandir, subtarefas) ========= */
+tbody.addEventListener('click', (ev)=>{
+  // Tarefa raiz
+  const mainRow = ev.target.closest('tr[data-id]');
+  if(mainRow){
+    const id = mainRow.dataset.id;
+    if(ev.target.closest('.act-play')){ startTask(id); return; }
+    if(ev.target.closest('.act-edit')){ openTaskDialog(id); return; }
+    if(ev.target.closest('.act-expand')){ const t=tasks.find(x=>x.id===id); t.expanded=!t.expanded; render(); return; }
+  }
+
+  // Ações dentro de subtable (correção do PLAY)
+  const btnPlaySub = ev.target.closest('.act-play-sub');
+  if(btnPlaySub){
+    const tid = btnPlaySub.dataset.task; const sid = btnPlaySub.dataset.sub;
+    startSub(tid,sid); return;
+  }
+  const addSub = ev.target.closest('.act-add-sub');
+  if(addSub){ openSubDialog(addSub.dataset.task, null); return; }
+  const editSub = ev.target.closest('.act-edit-sub');
+  if(editSub){ openSubDialog(editSub.dataset.task, editSub.dataset.sub); return; }
+  const delSub = ev.target.closest('.act-del-sub');
+  if(delSub){ delSubtask(delSub.dataset.task, delSub.dataset.sub); return; }
+});
+
+/* ========== Timer ========= */
+function schedule(){ if(tick) return; tick=setInterval(()=>{ if(active.taskId) updateTimes(); },250); }
+function stopTick(){ if(!tasks.some(t=>t.running||t.subtasks.some(s=>s.running))){ clearInterval(tick); tick=null; } }
+function updateTimes(){
+  const t=tasks.find(x=>x.id===active.taskId); if(!t){ $("#activeClock").textContent="00:00:00"; return; }
+  $("#activeName").textContent = active.subId ? `${t.title} › ${t.subtasks.find(s=>s.id===active.subId)?.title||""}` : t.title;
+  $("#activeClock").textContent = active.subId ? fmt(sSeconds(t.subtasks.find(s=>s.id===active.subId))) : fmt(tSeconds(t));
+  const row = tbody.querySelector(`tr[data-id="${t.id}"] .col-time code`); if(row) row.textContent = fmt(tSeconds(t));
+  if(t.expanded && active.subId){
+    const srow = tbody.querySelector(`tr[data-sub="${active.subId}"][data-parent="${t.id}"] td:nth-last-child(2) code`);
+    if(srow) srow.textContent = fmt(sSeconds(t.subtasks.find(s=>s.id===active.subId)));
+  }
+}
+function startTask(id){
+  pauseActive();
+  const t=tasks.find(x=>x.id===id); if(!t) return;
+  t.running=true; t.lastStart=Date.now(); active={taskId:id, subId:null};
+  schedule(); updateFooter(); render();
+}
+function startSub(tid,sid){
+  pauseActive();
+  const t=tasks.find(x=>x.id===tid); const s=t?.subtasks.find(x=>x.id===sid); if(!s) return;
+  s.running=true; s.lastStart=Date.now(); active={taskId:tid, subId:sid};
+  schedule(); updateFooter(); render();
+}
+function pauseActive(){
+  if(!active.taskId) return;
+  const t=tasks.find(x=>x.id===active.taskId); if(!t){ active={taskId:null,subId:null}; return; }
+  if(active.subId){
+    const s=t.subtasks.find(x=>x.id===active.subId); if(s && s.running){ s.timeSpentSec=sSeconds(s); s.running=false; s.lastStart=null; }
+  }else{
+    if(t.running){ const subt=t.subtasks.reduce((a,s)=>a+sSeconds(s),0); t.timeSpentSec=tSeconds(t)-subt; t.running=false; t.lastStart=null; }
+  }
+  active={taskId:null,subId:null}; stopTick(); updateFooter(); render();
+}
+function stopActive(){ pauseActive(); }
+function restartActive(){
+  if(!active.taskId){ render(); return; }
+  const t=tasks.find(x=>x.id===active.taskId); if(!t) return;
+  if(active.subId){ const s=t.subtasks.find(x=>x.id===active.subId); if(s){ s.timeSpentSec=0; s.running=false; s.lastStart=null; } }
+  else { t.timeSpentSec=0; t.running=false; t.lastStart=null; }
+  stopTick(); updateFooter(); render();
+}
+function updateFooter(){
+  if(!active.taskId){ $("#activeName").textContent="Nenhuma tarefa ativa"; $("#activeClock").textContent="00:00:00"; return; }
+  const t=tasks.find(x=>x.id===active.taskId);
+  $("#activeName").textContent = active.subId ? `${t.title} › ${t.subtasks.find(s=>s.id===active.subId)?.title||""}` : t.title;
+  $("#activeClock").textContent = active.subId ? fmt(sSeconds(t.subtasks.find(s=>s.id===active.subId))) : fmt(tSeconds(t));
+}
+
+/* ========== Controles do rodapé ========= */
+$("#gPlay").addEventListener('click', ()=>{ if(active.taskId){ // retomar
+  if(active.subId) startSub(active.taskId, active.subId); else startTask(active.taskId);
+} else { const first=tbody.querySelector('tr[data-id]'); if(first) startTask(first.dataset.id); }});
+$("#gPause").addEventListener('click', pauseActive);
+$("#gStop").addEventListener('click', stopActive);
+$("#gRestart").addEventListener('click', restartActive);
+
+/* ========== Modais (Tarefa/Subtarefa) ========= */
+let editingTaskId=null, editingSub={taskId:null, subId:null};
+$("#btnNew").addEventListener('click',()=>openTaskDialog(null));
+function openTaskDialog(id){
+  editingTaskId=id;
+  $("#dlgTitle").textContent = id ? "Editar Tarefa" : "Nova Tarefa";
+  const t = id ? tasks.find(x=>x.id===id) : makeTask("","","A fazer",[], "Média", "", "");
+  $("#t-title").value=t.title||""; $("#t-resp").value=t.responsible||"";
+  $("#t-status").value=t.status||"A fazer"; $("#t-priority").value=t.priority||"Média";
+  $("#t-due").value=t.due||""; $("#t-by").value=t.addedBy||""; $("#t-tags").value=(t.tags||[]).join(", ");
+  $("#dlgTask").showModal();
+}
+function closeTaskDialog(){ $("#dlgTask").close(); }
+$("#formTask").addEventListener('submit',(e)=>{
+  e.preventDefault();
+  const data = {
+    title: $("#t-title").value.trim(),
+    responsible: $("#t-resp").value.trim(),
+    status: $("#t-status").value,
+    priority: $("#t-priority").value,
+    due: $("#t-due").value || "",
+    addedBy: $("#t-by").value.trim(),
+    tags: ($("#t-tags").value||"").split(",").map(x=>x.trim()).filter(Boolean)
+  };
+  if(editingTaskId){ Object.assign(tasks.find(x=>x.id===editingTaskId), data); }
+  else { tasks.unshift(makeTask(data.title,data.responsible,data.status,data.tags,data.priority,data.due,data.addedBy)); }
+  closeTaskDialog(); render();
+});
+
+function openSubDialog(taskId, subId){
+  editingSub={taskId,subId};
+  const t=tasks.find(x=>x.id===taskId);
+  const s=subId? t.subtasks.find(x=>x.id===subId) : makeSub("", "A fazer", [], "Média", "", "", (t.subtasks.length||0)+1);
+  $("#dlgSubTitle").textContent = subId ? "Editar Subtarefa" : "Nova Subtarefa";
+  $("#s-title").value=s.title||""; $("#s-status").value=s.status||"A fazer";
+  $("#s-priority").value=s.priority||"Média";
+  $("#s-due").value=s.due||""; $("#s-scheduled").value=s.scheduled||"";
+  $("#s-order").value=s.order||1; $("#s-tags").value=(s.tags||[]).join(", ");
+  $("#dlgSub").showModal();
+}
+function closeSubDialog(){ $("#dlgSub").close(); }
+$("#formSub").addEventListener('submit',(e)=>{
+  e.preventDefault();
+  const t=tasks.find(x=>x.id===editingSub.taskId); if(!t) return;
+  const data = {
+    title: $("#s-title").value.trim(),
+    status: $("#s-status").value,
+    priority: $("#s-priority").value,
+    due: $("#s-due").value || "",
+    scheduled: $("#s-scheduled").value || "",
+    order: parseInt($("#s-order").value||"1",10),
+    tags: ($("#s-tags").value||"").split(",").map(x=>x.trim()).filter(Boolean)
+  };
+  if(editingSub.subId){ Object.assign(t.subtasks.find(x=>x.id===editingSub.subId), data); }
+  else { t.subtasks.push(makeSub(data.title,data.status,data.tags,data.priority,data.due,data.scheduled,data.order)); }
+  closeSubDialog(); render();
+});
+function delSubtask(taskId, subId){
+  const t=tasks.find(x=>x.id===taskId); if(!t) return;
+  t.subtasks=t.subtasks.filter(s=>s.id!==subId);
+  if(active.taskId===taskId && active.subId===subId) pauseActive();
+  // renumera ordem
+  t.subtasks.forEach((s,i)=>s.order=i+1);
+  render();
+}
+
+/* ========== Boot ========= */
+render();
+schedule();
+</script>
+</body>
+</html>
